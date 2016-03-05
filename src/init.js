@@ -3,8 +3,11 @@ import Rx from 'rx'
 
 // Logic (functional)
 function main () {
-  return Rx.Observable.timer(0, 1000)
-    .map(i => `Seconds elapses ${i}`)
+  return {
+    DOM: Rx.Observable.timer(0, 1000)
+            .map(i => `Seconds elapses ${i}`),
+    Log: Rx.Observable.timer(0, 2000).map(i => 2 * i)
+  }
 }
 
 // Effects (imperative)
@@ -20,5 +23,5 @@ function consoleLogEffect (msg$) {
 }
 
 const sink = main()
-DOMEffects(sink)
-consoleLogEffect(sink)
+DOMEffects(sink.DOM)
+consoleLogEffect(sink.Log)
