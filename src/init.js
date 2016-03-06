@@ -10,18 +10,31 @@ function main () {
   }
 }
 
-// Effects (imperative)
-function DOMEffects (text$) {
+// drivers (imperative)
+function DOMDriver (text$) {
   text$.subscribe(text => {
     const container = document.querySelector('#app')
     container.textContent = text
   })
 }
 
-function consoleLogEffect (msg$) {
+function consoleLogDriver (msg$) {
   msg$.subscribe(msg => console.log(msg))
 }
 
-const sink = main()
-DOMEffects(sink.DOM)
-consoleLogEffect(sink.Log)
+function run (mainFn, drivers) {
+  const sink = mainFn()
+
+  Object.keys(drivers).forEach(key => {
+    drivers[key](sink[key])
+  })
+}
+
+const drivers = {
+  DOM: DOMDriver,
+  Log: consoleLogDriver
+}
+
+run(main, drivers)
+
+
