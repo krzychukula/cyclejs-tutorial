@@ -2,13 +2,20 @@
 import Rx from 'rx'
 
 // Logic (functional)
-function main () {
+function main (DOMSource) {
+  const click$ = DOMSource
   return {
-    DOM: Rx.Observable.timer(0, 1000)
-            .map(i => `Seconds elapses ${i}`),
+    DOM: click$
+      .startWith(null)
+      .flatMapLatest(() =>
+        Rx.Observable.timer(0, 1000)
+            .map(i => `Seconds elapses ${i}`)
+      ),
     Log: Rx.Observable.timer(0, 2000).map(i => 2 * i)
   }
 }
+// source: input (read) effects
+// sink: output (write) effects
 
 // drivers (imperative)
 function DOMDriver (text$) {
@@ -16,6 +23,8 @@ function DOMDriver (text$) {
     const container = document.querySelector('#app')
     container.textContent = text
   })
+  const DOMSource = Rx.Observable.fromEvent(document, 'click')
+  return DOMSource
 }
 
 function consoleLogDriver (msg$) {
@@ -23,11 +32,15 @@ function consoleLogDriver (msg$) {
 }
 
 function run (mainFn, drivers) {
-  const sink = mainFn()
+  const proxyDOMSource = new Rx.Subject()
+  const sink = mainFn(proxyDOMSource)
 
-  Object.keys(drivers).forEach(key => {
-    drivers[key](sink[key])
-  })
+  const DOMSource = drivers.DOM(sink.DOM)
+  DOMSource.subscribe(click => proxyDOMSource.onNext(click))
+
+  // Object.keys(drivers).forEach(key => {
+  //   drivers[key](sink[key])
+  // })
 }
 
 const drivers = {
