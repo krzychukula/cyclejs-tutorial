@@ -1,9 +1,10 @@
 
 import Rx from 'rx'
+import Cycle from '@cycle/core'
 
 // Logic (functional)
-function main (DOMSource) {
-  const click$ = DOMSource
+function main (sources) {
+  const click$ = sources.DOM
   return {
     DOM: click$
       .startWith(null)
@@ -31,23 +32,26 @@ function consoleLogDriver (msg$) {
   msg$.subscribe(msg => console.log(msg))
 }
 
-function run (mainFn, drivers) {
-  const proxyDOMSource = new Rx.Subject()
-  const sink = mainFn(proxyDOMSource)
+// function run (mainFn, drivers) {
+//   const proxySources = {}
+//   Object.keys(drivers).forEach(key => {
+//     proxySources[key] = new Rx.Subject()
+//   })
+//   const sinks = mainFn(proxySources)
 
-  const DOMSource = drivers.DOM(sink.DOM)
-  DOMSource.subscribe(click => proxyDOMSource.onNext(click))
-
-  // Object.keys(drivers).forEach(key => {
-  //   drivers[key](sink[key])
-  // })
-}
+//   Object.keys(drivers).forEach(key => {
+//     const source = drivers[key](sinks[key])
+//     source.subscribe(x => {
+//       proxySources[key].onNext(x)
+//     })
+//   })
+// }
 
 const drivers = {
   DOM: DOMDriver,
   Log: consoleLogDriver
 }
 
-run(main, drivers)
+Cycle.run(main, drivers)
 
 
