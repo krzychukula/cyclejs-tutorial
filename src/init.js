@@ -4,9 +4,9 @@ import Cycle from '@cycle/core'
 
 // Logic (functional)
 function main (sources) {
-  const click$ = sources.DOM
+  const mouseover$ = sources.DOM.selectEvents('span', 'mouseover')
   return {
-    DOM: click$
+    DOM: mouseover$
       .startWith(null)
       .flatMapLatest(() =>
         Rx.Observable.timer(0, 1000)
@@ -51,7 +51,12 @@ function DOMDriver (obj$) {
     const element = createElement(obj)
     container.appendChild(element)
   })
-  const DOMSource = Rx.Observable.fromEvent(document, 'click')
+  const DOMSource = {
+    selectEvents: function (tagName, eventType) {
+      return Rx.Observable.fromEvent(document, eventType)
+        .filter(ev => ev.target.tagName === tagName.toUpperCase())
+    }
+  }
   return DOMSource
 }
 
