@@ -2,6 +2,19 @@
 import Rx from 'rx'
 import Cycle from '@cycle/core'
 
+function h (tagName, children) {
+  return {
+    tagName,
+    children
+  }
+}
+function h1 (children) {
+  return h('H1', children)
+}
+function span (children) {
+  return h('SPAN', children)
+}
+
 // Logic (functional)
 function main (sources) {
   const mouseover$ = sources.DOM.selectEvents('span', 'mouseover')
@@ -10,19 +23,13 @@ function main (sources) {
       .startWith(null)
       .flatMapLatest(() =>
         Rx.Observable.timer(0, 1000)
-            .map(i => {
-              return {
-                tagName: 'H1',
-                children: [
-                  {
-                    tagName: 'SPAN',
-                    children: [
-                      `Seconds elapses ${i}`
-                    ]
-                  }
-                ]
-              }
-            })
+            .map(i =>
+              h1([
+                span([
+                  `Seconds elapses ${i}`
+                ])
+              ])
+            )
       ),
     Log: Rx.Observable.timer(0, 2000).map(i => 2 * i)
   }
