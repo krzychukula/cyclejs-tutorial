@@ -1,35 +1,26 @@
 
 import Rx from 'rx'
 import Cycle from '@cycle/core'
-import {h1, span, makeDOMDriver} from '@cycle/dom'
+import {label, input, h1, hr, div, makeDOMDriver} from '@cycle/dom'
 
 // Logic (functional)
 function main (sources) {
-  const mouseover$ = sources.DOM.select('span').events('mouseover')
+  const inputEv$ = sources.DOM.select('.field').events('input')
+  const name$ = inputEv$.map(ev => ev.target.value).startWith('')
   return {
-    DOM: mouseover$
-      .startWith(null)
-      .flatMapLatest(() =>
-        Rx.Observable.timer(0, 1000)
-            .map(i =>
-              h1({ style: { background: 'red' } }, [
-                span([
-                  `Seconds elapses ${i}`
-                ])
-              ])
-            )
-      ),
-    Log: Rx.Observable.timer(0, 2000).map(i => 2 * i)
+    DOM: name$.map(name =>
+      div([
+        label('Name:'),
+        input('.field', {type: 'text'}),
+        hr(),
+        h1(`Hello ${name}!`)
+      ])
+    )
   }
 }
 
-function consoleLogDriver (msg$) {
-  msg$.subscribe(msg => console.log(msg))
-}
-
 const drivers = {
-  DOM: makeDOMDriver('#app'),
-  Log: consoleLogDriver
+  DOM: makeDOMDriver('#app')
 }
 
 Cycle.run(main, drivers)
