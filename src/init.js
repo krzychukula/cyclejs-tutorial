@@ -1,35 +1,50 @@
 
 import Rx from 'rx'
 import Cycle from '@cycle/core'
-import {label, p, button, div, makeDOMDriver} from '@cycle/dom'
+import {h1, h4, a, button, div, makeDOMDriver} from '@cycle/dom'
+import {makeHTTPDriver} from '@cycle/http'
 
-// Logic (functional)
+// dom read effect: button clicked
+// HTTP write effect: request sent
+// HTTP read effect: response received
+// dom write effect: data display
 function main (sources) {
-  const decrementClicks$ = sources.DOM
-    .select('.decrement').events('click')
-  const incrementClicks$ = sources.DOM
-    .select('.increment').events('click')
-  const decrementAction$ = decrementClicks$.map(ev => -1)
-  const incrementAction$ = incrementClicks$.map(ev => +1)
-  const number$ = Rx.Observable.of(10)
-    .merge(decrementAction$).merge(incrementAction$)
-    .scan((previousValue, currentValue) => previousValue + currentValue)
+  const clickEvent$ = sources.DOM.select('.get-first').events('click')
+  const request$ = clickEvent$.map(() => {
+    return {
+      url: 'http://jsonplaceholder.typicode.com/users/1',
+      method: 'GET'
+    }
+  })
 
-  return {
-    DOM: number$.map(number =>
-      div([
-        button('.decrement', 'Decrement'),
-        button('.increment', 'Increment'),
-        p([
-          label(String(number))
-        ])
-      ])
+  const response$$ = sources.HTTP
+    .filter(response$ =>
+      response$.request.url === 'http://jsonplaceholder.typicode.com/users/1'
     )
+  const response$ = response$$.switch()
+  const firstUser$ = response$.map(response => response.body)
+    .startWith(null)
+  return {
+    DOM: firstUser$.map(firstUser =>
+      div([
+        button('.get-first', 'Get first user'),
+        (firstUser === null) ? null
+          : div('.user-details', [
+            h1('.user-name', firstUser.name),
+            h4('.user-email', firstUser.email),
+            a('.user-website', {
+              href: firstUser.website
+            }, firstUser.website)
+          ])
+      ])
+    ),
+    HTTP: request$
   }
 }
 
 const drivers = {
-  DOM: makeDOMDriver('#app')
+  DOM: makeDOMDriver('#app'),
+  HTTP: makeHTTPDriver()
 }
 
 Cycle.run(main, drivers)
