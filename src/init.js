@@ -1,44 +1,45 @@
 
 import Rx from 'rx'
 import Cycle from '@cycle/core'
-import {h1, h4, a, button, div, makeDOMDriver} from '@cycle/dom'
+import {label, input, h2, div, makeDOMDriver} from '@cycle/dom'
 import {makeHTTPDriver} from '@cycle/http'
 
-// dom read effect: button clicked
-// HTTP write effect: request sent
-// HTTP read effect: response received
-// dom write effect: data display
+// dom read efffect: detect slider change
+// racalcualate bmi
+// dom write effect: display bmi
 function main (sources) {
-  const clickEvent$ = sources.DOM.select('.get-first').events('click')
-  const request$ = clickEvent$.map(() => {
-    return {
-      url: 'http://jsonplaceholder.typicode.com/users/1',
-      method: 'GET'
-    }
-  })
+  const changeWeight$ = sources.DOM.select('.weight').events('input')
+    .map(ev => ev.target.value)
+  const changeHeight$ = sources.DOM.select('.height').events('input')
+    .map(ev => ev.target.value)
 
-  const response$$ = sources.HTTP
-    .filter(response$ =>
-      response$.request.url === 'http://jsonplaceholder.typicode.com/users/1'
-    )
-  const response$ = response$$.switch()
-  const firstUser$ = response$.map(response => response.body)
-    .startWith(null)
+  const state$ = Rx.Observable.combineLatest(
+    changeWeight$.startWith(65),
+    changeHeight$.startWith(170),
+    (weight, height) => {
+      const heightMeters = height * 0.01
+      const bmi = Math.round(weight / (heightMeters * heightMeters))
+      return {
+        bmi: bmi,
+        weight: weight,
+        height: height
+      }
+    }
+  )
   return {
-    DOM: firstUser$.map(firstUser =>
+    DOM: state$.map(state =>
       div([
-        button('.get-first', 'Get first user'),
-        (firstUser === null) ? null
-          : div('.user-details', [
-            h1('.user-name', firstUser.name),
-            h4('.user-email', firstUser.email),
-            a('.user-website', {
-              href: firstUser.website
-            }, firstUser.website)
-          ])
+        div([
+          label('Weight: ' + state.weight + 'kg'),
+          input('.weight', {type: 'range', min: 40, max: 150, value: state.weight})
+        ]),
+        div([
+          label('Height: ' + state.height + 'cm'),
+          input('.height', {type: 'range', min: 140, max: 220, value: state.height})
+        ]),
+        h2('BMI is ' + state.bmi)
       ])
-    ),
-    HTTP: request$
+    )
   }
 }
 
