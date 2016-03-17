@@ -4,16 +4,19 @@ import Cycle from '@cycle/core'
 import {label, input, h2, div, makeDOMDriver} from '@cycle/dom'
 import {makeHTTPDriver} from '@cycle/http'
 
-// dom read efffect: detect slider change
-// racalcualate bmi
-// dom write effect: display bmi
-function main (sources) {
-  const changeWeight$ = sources.DOM.select('.weight').events('input')
+function intent (DOMSource) {
+  const changeWeight$ = DOMSource.select('.weight').events('input')
     .map(ev => ev.target.value)
-  const changeHeight$ = sources.DOM.select('.height').events('input')
+  const changeHeight$ = DOMSource.select('.height').events('input')
     .map(ev => ev.target.value)
+  return {
+    changeWeight$,
+    changeHeight$
+  }
+}
 
-  const state$ = Rx.Observable.combineLatest(
+function model (changeWeight$, changeHeight$) {
+  return Rx.Observable.combineLatest(
     changeWeight$.startWith(65),
     changeHeight$.startWith(170),
     (weight, height) => {
@@ -26,8 +29,10 @@ function main (sources) {
       }
     }
   )
-  return {
-    DOM: state$.map(state =>
+}
+
+function view (state$) {
+  return state$.map(state =>
       div([
         div([
           label('Weight: ' + state.weight + 'kg'),
@@ -40,6 +45,17 @@ function main (sources) {
         h2('BMI is ' + state.bmi)
       ])
     )
+}
+// dom read efffect: detect slider change
+// racalcualate bmi
+// dom write effect: display bmi
+function main (sources) {
+  const {changeWeight$, changeHeight$} = intent(sources.DOM)
+  const state$ = model(changeWeight$, changeHeight$)
+  const vtree$ = view(state$)
+
+  return {
+    DOM: vtree$
   }
 }
 
