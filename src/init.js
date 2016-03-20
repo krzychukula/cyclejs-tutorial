@@ -45,17 +45,51 @@ function LabeledSlider (sources) {
 }
 
 function main (sources) {
-  const props$ = Rx.Observable.of({
+  const heightProps$ = Rx.Observable.of({
     label: 'Height',
     unit: 'cm',
     min: 140,
     max: 220,
     init: 170
   })
-  return LabeledSlider({
-    DOM: sources.DOM,
-    props: props$
+  const heightSinks = LabeledSlider({
+    DOM: sources.DOM.select('.height'),
+    props: heightProps$
   })
+  const heightVTree$ = heightSinks.DOM.map(vtree => {
+    vtree.properties.className += ' height'
+    return vtree
+  })
+
+  const weightProps$ = Rx.Observable.of({
+    label: 'Weight',
+    unit: 'kg',
+    min: 40,
+    max: 120,
+    init: 70
+  })
+  const weightSinks = LabeledSlider({
+    DOM: sources.DOM.select('.weight'),
+    props: weightProps$
+  })
+  const weightVTree$ = weightSinks.DOM.map(vtree => {
+    vtree.properties.className += ' weight'
+    return vtree
+  })
+
+  const vtree$ = Rx.Observable.combineLatest(
+    weightVTree$,
+    heightVTree$,
+    (weightVTree, heightVTree) => {
+      return div([
+        weightVTree,
+        heightVTree
+      ])
+    }
+  )
+  return {
+    DOM: vtree$
+  }
 }
 
 const drivers = {
