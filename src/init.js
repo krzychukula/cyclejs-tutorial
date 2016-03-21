@@ -45,7 +45,7 @@ function LabeledSlider (sources) {
   }
 }
 
-function IsolateLabeledSlider = function (sources) {
+function IsolateLabeledSlider (sources) {
   return isolate(LabeledSlider)(sources)
 }
 
