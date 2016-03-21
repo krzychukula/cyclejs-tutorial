@@ -57,7 +57,7 @@ function main (sources) {
     max: 220,
     init: 170
   })
-  //const HeightSlider = isolate(LabeledSlider, 'height')
+  // const HeightSlider = isolate(LabeledSlider, 'height')
 
   const heightSinks = IsolateLabeledSlider({
     DOM: sources.DOM,
@@ -72,7 +72,7 @@ function main (sources) {
     max: 120,
     init: 70
   })
-  //const WeightSlider = isolate(LabeledSlider, 'weight')
+  // const WeightSlider = isolate(LabeledSlider, 'weight')
   const weightSinks = IsolateLabeledSlider({
     DOM: sources.DOM,
     props: weightProps$
