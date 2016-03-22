@@ -1,7 +1,7 @@
 
 import Rx from 'rx'
 import Cycle from '@cycle/core'
-import {label, input, div, makeDOMDriver} from '@cycle/dom'
+import {h2, label, input, div, makeDOMDriver} from '@cycle/dom'
 import {makeHTTPDriver} from '@cycle/http'
 import isolate from '@cycle/isolate'
 
@@ -41,7 +41,8 @@ function LabeledSlider (sources) {
   const state$ = model(change$, sources.props)
   const vtree$ = view(state$)
   return {
-    DOM: vtree$
+    DOM: vtree$,
+    value: state$.map(state => state.value)
   }
 }
 
@@ -64,6 +65,7 @@ function main (sources) {
     props: heightProps$
   })
   const heightVTree$ = heightSinks.DOM
+  const heightValue$ = heightSinks.value
 
   const weightProps$ = Rx.Observable.of({
     label: 'Weight',
@@ -78,14 +80,26 @@ function main (sources) {
     props: weightProps$
   })
   const weightVTree$ = weightSinks.DOM
+  const weightValue$ = weightSinks.value
+
+  const bmi$ = Rx.Observable.combineLatest(
+    weightValue$,
+    heightValue$,
+    (weight, height) => {
+      const heightMeters = height * 0.01
+      const bmi = Math.round(weight / (heightMeters * heightMeters))
+      return bmi
+    })
 
   const vtree$ = Rx.Observable.combineLatest(
+    bmi$,
     weightVTree$,
     heightVTree$,
-    (weightVTree, heightVTree) => {
+    (bmi, weightVTree, heightVTree) => {
       return div([
         weightVTree,
-        heightVTree
+        heightVTree,
+        h2('BMI is ' + bmi)
       ])
     }
   )
